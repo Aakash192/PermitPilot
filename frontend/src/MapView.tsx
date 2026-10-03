@@ -40,6 +40,21 @@ function shortCategory(category: string): string {
   return category.replace(/^Residential\s*-\s*/i, "") || "Permit"
 }
 
+function openFrame(): { paddingTopLeft: [number, number]; paddingBottomRight: [number, number] } {
+  const header = document.querySelector(".panel.top")?.getBoundingClientRect()
+  const chat = document.querySelector(".panel.chat")?.getBoundingClientRect()
+  const width = window.innerWidth
+  const height = window.innerHeight
+  const chatAcrossBottom = Boolean(chat && chat.width > width * 0.7)
+  const top = header ? Math.min(Math.ceil(header.bottom) + 16, Math.round(height * 0.24)) : 88
+  const right = chat && !chatAcrossBottom ? Math.min(Math.ceil(width - chat.left) + 20, Math.round(width * 0.4)) : 40
+  const bottom = chatAcrossBottom && chat ? Math.min(Math.ceil(height - chat.top) + 16, Math.round(height * 0.48)) : 40
+  return {
+    paddingTopLeft: [36, top],
+    paddingBottomRight: [right, bottom],
+  }
+}
+
 function popupHtml(permit: Permit): string {
   const homes = permit.stated ? `${permit.homes} homes` : `About ${permit.homes} homes`
   const applied = permit.applied ? permit.applied.slice(0, 10) : ""
@@ -67,6 +82,7 @@ export function MapView({ permits, visibleIds, focus }: Props) {
       zoomControl: false,
       preferCanvas: true,
       fadeAnimation: false,
+      zoomAnimationThreshold: 8,
       maxZoom: 18,
     }).setView([51.0486, -114.0708], 11)
     map.attributionControl.setPosition("bottomleft")
@@ -109,12 +125,14 @@ export function MapView({ permits, visibleIds, focus }: Props) {
 
     if (visible.length === 0) return
     const bounds = L.latLngBounds(visible.map((permit) => [permit.lat, permit.lng]))
-    const filtered = selected
-    map.fitBounds(bounds, {
-      paddingTopLeft: [24, 84],
-      paddingBottomRight: filtered ? [440, 420] : [440, 150],
-      maxZoom: 14,
-      animate: false,
+    const framed = visible.length > 1 ? bounds.pad(0.08) : bounds
+    map.closePopup()
+    map.invalidateSize({ animate: false })
+    map.fitBounds(framed, {
+      ...openFrame(),
+      maxZoom: visible.length === 1 ? 15 : 14,
+      animate: true,
+      duration: 0.45,
     })
   }, [permits, visibleIds])
 
@@ -124,7 +142,7 @@ export function MapView({ permits, visibleIds, focus }: Props) {
     const map = mapRef.current
     if (!marker || !map) return
     const zoom = Math.max(map.getZoom(), 15)
-    map.flyTo(marker.getLatLng(), zoom, { duration: 0.55 })
+    map.setView(marker.getLatLng(), zoom, { animate: true })
     marker.openPopup()
   }, [focus])
 

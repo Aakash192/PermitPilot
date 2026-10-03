@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@permit-pilot/core": "*",
     "leaflet": "^1.9.4",
     "papaparse": "^5.5.3",
     "react": "^19.1.0",
