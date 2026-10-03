@@ -1,0 +1,11 @@
+node_modules
+.turbo
+.DS_Store
+frontend/dist
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+backend/dist
+backend/.env
+backend/.env.*
+!backend/.env.example
