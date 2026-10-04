@@ -16,7 +16,8 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS-EC2_·_CloudFront_·_WAF-FF9900?logo=amazonwebservices&logoColor=white)
 
-![PermitPilot: 3D map of Calgary with the AI agent chat]
+![PermitPilot: 3D map of Calgary with the AI agent chat](assets/screenshots/hero.png)
+
 </div>
 
 ---
@@ -295,11 +296,11 @@ Open **http://localhost:5173**. API docs are at http://localhost:8000/docs. Run 
 
 ## Team The Chimichangas
 
-| | Role |
+| Name | Role |
 |---|---|
-| **Aakash** | Backend, AI agent, data pipeline, AWS deployment |
-| **Harsingh** | Frontend, map and 3D view |
-| **KM** | Utility-industry and geospatial expertise, data validation, problem framing |
+| **Aakash Suryavanshi** | Backend, AI agent, data pipeline, AWS deployment and security |
+| **Harsingh Sekhon** | Frontend, map and 3D view |
+| **Khalid Mehmood** | Utility-industry and geospatial expertise, data validation, problem framing |
 
 <div align="center">
 
