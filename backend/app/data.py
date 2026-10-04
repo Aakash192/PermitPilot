@@ -14,6 +14,7 @@ from pathlib import Path
 import pandas as pd
 
 from . import config
+from .corridor import distances_m, load_polygons
 from .homes import estimate_homes_regex, load_extractions
 
 STATUS_GROUP = {
@@ -98,6 +99,10 @@ def build(csv_path: Path, extractions_path: Path, as_of: str) -> PermitData:
     df = pd.concat([df, homes_df], axis=1)
     df["is_multi"] = [_is_multi(c, d) for c, d in zip(df["category"], df["description"])]
 
+    # Distance to the Transportation Utility Corridor (ring road + major utilities).
+    df["tuc_m"] = distances_m(df["longitude"], df["latitude"], load_polygons(config.TUC_GEOJSON))
+    df["near_corridor"] = df["tuc_m"] <= config.CORRIDOR_NEAR_M
+
     return PermitData(df, targets, default_target, skipped, as_of_ts)
 
 
@@ -134,4 +139,6 @@ def to_api(row: pd.Series) -> dict:
         "evidenceQuote": row["evidence_quote"],
         "homesSource": row["homes_source"],
         "isMulti": bool(row["is_multi"]),
+        "corridorMeters": None if pd.isna(row["tuc_m"]) else int(round(row["tuc_m"])),
+        "nearCorridor": bool(row["near_corridor"]),
     }

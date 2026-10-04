@@ -27,6 +27,8 @@ def _row(r: pd.Series) -> dict:
         "homesNeedReview": bool(r["needs_review"]),
         "daysOverTarget": None if pd.isna(r["days_over"]) else int(r["days_over"]),
         "applied": r["applieddate"].strftime("%Y-%m-%d") if pd.notna(r["applieddate"]) else None,
+        "corridorMeters": None if pd.isna(r["tuc_m"]) else int(round(r["tuc_m"])),
+        "nearCorridor": bool(r["near_corridor"]),
     }
 
 
@@ -47,6 +49,8 @@ class SearchPermitsArgs(BaseModel):
     category: Optional[Literal["multi", "suite", "single"]] = Field(
         None, description="multi = multi-family/rowhouse/townhouse, suite = secondary suites, single = single/semi/duplex.")
     min_homes: Optional[int] = None
+    near_corridor: Optional[bool] = Field(
+        None, description="true = only files near the Transportation Utility Corridor (ring road and major utility lines).")
     sort: Optional[Literal["pilot", "homes", "oldest", "newest", "overdue"]] = Field(
         None, description="pilot = PermitPilot priority (default), homes = most homes first, oldest = first in first out.")
     limit: Optional[int] = Field(None, description="How many files to return, e.g. 50.")
@@ -84,7 +88,8 @@ def search_permits(data: PermitData, a: SearchPermitsArgs):
     group = None if a.group == "all" else (a.group or "needs_decision")
     df = ranker.search(
         data, group=group, quadrant=a.quadrant, community=a.community, ward=a.ward, srg=a.srg,
-        category=a.category, min_homes=a.min_homes, sort=a.sort or "pilot", limit=a.limit,
+        category=a.category, min_homes=a.min_homes, near_corridor=a.near_corridor,
+        sort=a.sort or "pilot", limit=a.limit,
     )
     result = {
         "matched": int(len(df)),

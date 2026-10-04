@@ -24,6 +24,8 @@ export type Permit = {
   evidenceQuote?: string
   homesSource?: "llm" | "regex"
   isMulti?: boolean
+  corridorMeters?: number | null
+  nearCorridor?: boolean
 }
 
 export type PickRow = {

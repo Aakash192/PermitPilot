@@ -232,11 +232,20 @@ export function App() {
   function homesTag(id: string) {
     const permit = permits.find((p) => p.id === id)
     if (!permit || permit.needsReview == null) return null
-    return permit.needsReview ? (
-      <span className="tag check">estimate, planner to confirm</span>
-    ) : permit.homesSource === "llm" ? (
-      <span className="tag">AI-counted</span>
-    ) : null
+    return (
+      <>
+        {permit.needsReview ? (
+          <span className="tag check">estimate, planner to confirm</span>
+        ) : permit.homesSource === "llm" ? (
+          <span className="tag">AI-counted</span>
+        ) : null}
+        {permit.nearCorridor && (
+          <span className="tag check" title="Within 300 m of the Transportation Utility Corridor (ring road and major utility lines)">
+            {permit.corridorMeters === 0 ? "in utility corridor" : `${permit.corridorMeters} m from utility corridor`}
+          </span>
+        )}
+      </>
+    )
   }
 
   const onMapCount = visibleIds ? visibleIds.length : permits.length

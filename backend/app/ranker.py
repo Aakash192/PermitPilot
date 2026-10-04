@@ -80,6 +80,7 @@ def search(
     category: str | None = None,
     status: str | None = None,
     min_homes: int | None = None,
+    near_corridor: bool | None = None,
     sort: str = "pilot",
     limit: int | None = None,
 ) -> pd.DataFrame:
@@ -102,6 +103,8 @@ def search(
         df = df[df["statuscurrent"].str.lower() == status.lower()]
     if min_homes:
         df = df[df["homes"] >= min_homes]
+    if near_corridor is not None:
+        df = df[df["near_corridor"] == near_corridor]
 
     df = df.copy()
     if sort == "homes":

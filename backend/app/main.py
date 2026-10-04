@@ -1,4 +1,5 @@
 """PermitPilot API. Run: uvicorn app.main:app --reload --port 8000 (from backend/)."""
+import json
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
@@ -89,6 +90,14 @@ def chat(body: ChatRequest) -> dict:
         return run_agent(body.message, get_data(), history)
     except Exception as exc:  # network, auth or rate-limit errors from OpenAI
         raise HTTPException(status_code=502, detail=f"Agent error: {type(exc).__name__}") from exc
+
+
+@app.get("/api/corridor")
+def corridor() -> dict:
+    """Transportation Utility Corridor shapes (GeoJSON) for a map layer."""
+    if not config.TUC_GEOJSON.exists():
+        raise HTTPException(status_code=404, detail="No corridor file")
+    return json.loads(config.TUC_GEOJSON.read_text(encoding="utf-8"))
 
 
 @app.get("/api/scoreboard")

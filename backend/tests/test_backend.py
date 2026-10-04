@@ -143,3 +143,16 @@ def test_tool_schemas_are_strict():
         assert spec["strict"] is True
         assert params["additionalProperties"] is False
         assert set(params["required"]) == set(params["properties"])
+
+
+def test_corridor_distances():
+    df = get_data().permits
+    assert df["tuc_m"].notna().all()
+    near = df[df["near_corridor"]]
+    assert 50 < len(near) < 300  # a ring at the city edge, not the whole city
+    belvedere = df[df["permitnum"] == "DP2026-01147"].iloc[0]
+    assert 50 < belvedere["tuc_m"] < 150 and belvedere["near_corridor"]
+    queue_near = ranker.search(get_data(), near_corridor=True)
+    assert set(queue_near["group"]) == {"needs_decision"}
+    client = TestClient(app)
+    assert client.get("/api/corridor").json()["type"] == "FeatureCollection"
