@@ -4,7 +4,8 @@
   "packageManager": "npm@11.17.0",
   "workspaces": [
     "frontend",
-    "backend"
+    "backend",
+    "packages/*"
   ],
   "scripts": {
     "dev": "turbo dev",

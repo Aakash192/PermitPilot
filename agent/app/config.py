@@ -1,4 +1,4 @@
-"""Settings read from the environment (backend/.env in development)."""
+"""Settings read from the environment (agent/.env in development)."""
 import os
 from pathlib import Path
 

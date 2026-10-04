@@ -1,6 +1,6 @@
 """Read every permit description once with an LLM and cache the home counts.
 
-Run from backend/:  python -m app.extract            (only new descriptions are sent)
+Run from agent/:   python -m app.extract            (only new descriptions are sent)
                     python -m app.extract --eval      (accuracy vs data/ground_truth.csv)
 
 Cost: about 740 short descriptions, a few cents with a small model. Results are written to
@@ -58,7 +58,7 @@ def read_one(client, description: str, category: str) -> dict:
 
 def run_extraction() -> None:
     if not (config.OPENAI_API_KEY and config.OPENAI_MODEL):
-        sys.exit("Set OPENAI_API_KEY and OPENAI_MODEL in backend/.env first.")
+        sys.exit("Set OPENAI_API_KEY and OPENAI_MODEL in agent/.env first.")
     from openai import OpenAI
 
     client = OpenAI(api_key=config.OPENAI_API_KEY)

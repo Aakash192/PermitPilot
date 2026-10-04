@@ -1,9 +1,9 @@
-# PermitPilot backend
+# PermitPilot agent (Python)
 
 FastAPI service that ranks Calgary's housing-permit review queue and runs the PermitPilot AI agent.
 Python does every count and ranking; the LLM only understands the question, picks tools, and explains the result.
 
-## Run it (Windows PowerShell, from `backend/`)
+## Run it (Windows PowerShell, from `agent/`)
 
 ```powershell
 py -3.11 -m venv .venv
@@ -12,7 +12,7 @@ pip install -r requirements.txt
 copy .env.example .env        # then add OPENAI_API_KEY and OPENAI_MODEL
 python -m uvicorn app.main:app --reload --port 8000
 ```
-Open http://localhost:8000/docs to try every endpoint. `npm run dev` at the repo root also starts it through Turborepo (activate the venv first).
+Open http://localhost:8000/docs to try every endpoint. Runs separately from the TypeScript server in `backend/`, which can forward chat to it via `HOSTED_AGENT_URL`.
 
 Tests: `python -m pytest -q`
 

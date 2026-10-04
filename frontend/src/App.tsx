@@ -1,34 +1,13 @@
+import { chatResponseSchema, type Permit } from "@permit-pilot/core"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { runAgent, SAMPLE_PROMPT } from "./agent"
-import { askAgent, fetchPermits, fetchScoreboard, type ChatTurn, type Scoreboard } from "./api"
+import defaultCsv from "../data/calgary_housing_development_permits.csv?raw"
 import { MapView } from "./MapView"
 import { parsePermitCsv } from "./parsePermits"
-import type { AgentResult, Permit } from "./types"
-import "./live.css"
-
-// One-click questions for the demo (live agent only).
-const DEMO_PROMPTS = [
-  "How does PermitPilot compare to oldest-first this week?",
-  "Show the top 20 files to review this week",
-  "Why is DP2025-02163 ranked where it is?",
-  "We lost two planners this week, what drops?",
-]
-
-// Plain-language labels for the agent's tools.
-const TOOL_LABELS: Record<string, string> = {
-  search_permits: "Searched the permits",
-  rank_queue: "Ranked this week's queue",
-  simulate_capacity_cut: "Re-planned for fewer planners",
-  get_permit: "Looked up the permit",
-  compare_rankings: "Compared with oldest-first",
-  clear_map: "Reset the map",
-}
 
 type ChatMessage = {
   id: number
   role: "user" | "agent"
   text: string
-  tools?: string[]
   picks?: {
     id: string
     homes: number
@@ -39,90 +18,78 @@ type ChatMessage = {
   more?: number
 }
 
-const SAMPLE_URL = "/data/calgary_housing_development_permits.csv"
+const SAMPLE_PROMPT = "Give me the 50 files to review first this week."
 
 let messageId = 0
 
-// The AI marks key numbers as **bold**; show them bold instead of with asterisks.
-function withBold(text: string) {
-  return text.split(/\*\*(.+?)\*\*/g).map((part, index) => (index % 2 === 1 ? <strong key={index}>{part}</strong> : part))
+async function registerFile(fileId: string, csv: string): Promise<string> {
+  const response = await fetch("/api/files", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ csv, fileId }),
+  })
+  const body = (await response.json().catch(() => ({}))) as { fileId?: string; error?: string }
+  if (!response.ok || !body.fileId) {
+    throw new Error(body.error ?? "The review service did not accept this file.")
+  }
+  return body.fileId
 }
 
 export function App() {
   const [permits, setPermits] = useState<Permit[]>([])
   const [skipped, setSkipped] = useState(0)
   const [fileName, setFileName] = useState("")
+  const [fileId, setFileId] = useState<string | null>(null)
+  const [linking, setLinking] = useState(false)
   const [visibleIds, setVisibleIds] = useState<string[] | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [draft, setDraft] = useState("")
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [dragging, setDragging] = useState(false)
   const [focus, setFocus] = useState<{ id: string; n: number } | null>(null)
-  // live = permits came from the backend, so chat goes to the AI agent there.
-  const [live, setLive] = useState(false)
-  const [thinking, setThinking] = useState(false)
-  const [score, setScore] = useState<Scoreboard | null>(null)
-  const historyRef = useRef<ChatTurn[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
   const threadRef = useRef<HTMLDivElement>(null)
   const dragDepth = useRef(0)
-
-  const loadPermits = useCallback((name: string, rows: Permit[], skippedRows: number, fromBackend: boolean) => {
-    setPermits(rows)
-    setSkipped(skippedRows)
-    setFileName(name)
-    setLive(fromBackend)
-    setVisibleIds(null)
-    setMessages([])
-    historyRef.current = []
-    setError("")
-    setLoading(false)
-  }, [])
+  const loadGen = useRef(0)
 
   const loadText = useCallback((name: string, text: string) => {
     const parsed = parsePermitCsv(text)
     if (parsed.permits.length === 0) {
       setError("No locations found. The file needs latitude and longitude columns.")
-      setLoading(false)
-      return
+      return false
     }
-    loadPermits(name, parsed.permits, parsed.skipped, false)
-  }, [loadPermits])
+    setPermits(parsed.permits)
+    setSkipped(parsed.skipped)
+    setFileName(name)
+    setVisibleIds(null)
+    setMessages([])
+    setError("")
+    return true
+  }, [])
 
-  useEffect(() => {
-    let cancelled = false
-    // Backend first; if it is not running, fall back to the bundled CSV and the local agent.
-    fetchPermits()
-      .then((rows) => {
-        if (cancelled) return
-        loadPermits("calgary_housing_development_permits.csv", rows, 0, true)
-        fetchScoreboard()
-          .then((board) => {
-            if (!cancelled) setScore(board)
-          })
-          .catch(() => undefined)
-      })
-      .catch(() =>
-        fetch(SAMPLE_URL)
-          .then((response) => {
-            if (!response.ok) throw new Error("Sample file missing")
-            return response.text()
-          })
-          .then((text) => {
-            if (!cancelled) loadText("calgary_housing_development_permits.csv", text)
-          }),
-      )
-      .catch(() => {
-        if (!cancelled) {
-          setLoading(false)
-          setError("Drop a CSV to plot it. Include latitude and longitude columns.")
-        }
-      })
-    return () => {
-      cancelled = true
+  const connectFile = useCallback(async (id: string, csv: string, gen: number) => {
+    setLinking(true)
+    try {
+      const saved = await registerFile(id, csv)
+      if (gen !== loadGen.current) return
+      setFileId(saved)
+    } catch (caught) {
+      if (gen !== loadGen.current) return
+      setFileId(null)
+      setError(caught instanceof Error ? caught.message : "Start the backend to chat about this file.")
+    } finally {
+      if (gen === loadGen.current) setLinking(false)
     }
-  }, [loadPermits, loadText])
+  }, [])
+
+  const openFile = useCallback(
+    (name: string, text: string, id: string) => {
+      if (!loadText(name, text)) return
+      const gen = ++loadGen.current
+      void connectFile(id, text, gen)
+    },
+    [connectFile, loadText],
+  )
 
   useEffect(() => {
     const thread = threadRef.current
@@ -154,7 +121,7 @@ export function App() {
       dragDepth.current = 0
       setDragging(false)
       const file = event.dataTransfer?.files?.[0]
-      if (file) readFile(file)
+      if (file) readDropped(file)
     }
     window.addEventListener("dragenter", onDragEnter)
     window.addEventListener("dragover", onDragOver)
@@ -168,10 +135,11 @@ export function App() {
     }
   }, [])
 
-  function readFile(file: File) {
+  function readDropped(file: File) {
     const reader = new FileReader()
     reader.onload = () => {
-      if (typeof reader.result === "string") loadText(file.name, reader.result)
+      if (typeof reader.result !== "string") return
+      openFile(file.name, reader.result, `upload-${Date.now()}`)
     }
     reader.readAsText(file)
   }
@@ -183,60 +151,59 @@ export function App() {
 
   async function ask(text: string) {
     const prompt = text.trim()
-    if (!prompt || permits.length === 0 || thinking) return
+    if (!prompt || permits.length === 0) return
     push({ role: "user", text: prompt })
     setDraft("")
-
-    let result: AgentResult
-    let tools: string[] | undefined
-    if (live) {
-      setThinking(true)
-      try {
-        const reply = await askAgent(prompt, historyRef.current)
-        result = reply
-        tools = [
-          ...new Set(
-            reply.actions.filter((action) => action.ok).map((action) => TOOL_LABELS[action.tool] ?? action.tool),
-          ),
-        ]
-        historyRef.current = [
-          ...historyRef.current,
-          { role: "user" as const, content: prompt },
-          { role: "assistant" as const, content: reply.reply },
-        ].slice(-10)
-      } catch {
-        // Backend or OpenAI unavailable: answer with the local rule-based agent instead.
-        result = runAgent(prompt, permits)
-        tools = ["AI unavailable, answered offline"]
-      } finally {
-        setThinking(false)
-      }
-    } else {
-      result = runAgent(prompt, permits)
+    if (!fileId) {
+      push({
+        role: "agent",
+        text: "The map has the file. Start the backend so chat can rank it.",
+      })
+      return
     }
-
-    if (result.mode === "reset") setVisibleIds(null)
-    if (result.mode === "filter") setVisibleIds(result.ids)
-    const shown = result.picks.length
-    const hidden = result.mode === "filter" ? Math.max(0, result.ids.length - shown) : 0
-    push({
-      role: "agent",
-      text: result.reply,
-      tools: tools && tools.length > 0 ? tools : undefined,
-      picks: result.picks,
-      more: hidden > 0 ? hidden : undefined,
-    })
-  }
-
-  // Shows whether a home count was read by the AI or is an estimate a planner should confirm.
-  function homesTag(id: string) {
-    const permit = permits.find((p) => p.id === id)
-    if (!permit || permit.needsReview == null) return null
-    return permit.needsReview ? (
-      <span className="tag check">estimate, planner to confirm</span>
-    ) : permit.homesSource === "llm" ? (
-      <span className="tag">AI-counted</span>
-    ) : null
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: prompt, fileId }),
+      })
+      const body = (await response.json()) as { error?: string }
+      if (!response.ok) {
+        push({ role: "agent", text: body.error ?? "The review service could not answer." })
+        return
+      }
+      const result = chatResponseSchema.parse(body)
+      if (result.map.kind === "show") setVisibleIds(result.map.permitIds)
+      if (result.map.kind === "showAll") setVisibleIds(null)
+      const picks =
+        result.map.kind === "show"
+          ? result.map.permitIds.slice(0, 6).flatMap((id) => {
+              const permit = permits.find((item) => item.id === id)
+              if (!permit) return []
+              return [
+                {
+                  id,
+                  homes: permit.homes,
+                  stated: permit.stated,
+                  address: permit.address,
+                  community: permit.community,
+                },
+              ]
+            })
+          : undefined
+      const hidden = result.map.kind === "show" ? result.map.permitIds.length - (picks?.length ?? 0) : 0
+      push({
+        role: "agent",
+        text: result.reply,
+        picks,
+        more: hidden > 0 ? hidden : undefined,
+      })
+    } catch {
+      push({
+        role: "agent",
+        text: "The review service is not running. From the repo root, run npm run dev.",
+      })
+    }
   }
 
   const onMapCount = visibleIds ? visibleIds.length : permits.length
@@ -249,14 +216,11 @@ export function App() {
         <div>
           <div className="brand">Permit Pilot</div>
           <div className="sub">
-            {loading && "Loading the sample file…"}
-            {!loading && fileName && (
+            {fileName ? (
               <>
                 {onMapCount.toLocaleString("en-CA")} on the map
                 <span className="sep">·</span>
                 {fileName}
-                <span className="sep">·</span>
-                {live ? "Live AI agent" : "Offline mode"}
                 {skipped > 0 && (
                   <>
                     <span className="sep">·</span>
@@ -264,32 +228,27 @@ export function App() {
                   </>
                 )}
               </>
+            ) : (
+              "Load the default file, or upload a CSV"
             )}
-            {!loading && !fileName && "Drop a CSV with latitude and longitude"}
           </div>
-          {live && score && (
-            <div className="score" title="Same weekly workload, two ways of choosing the files">
-              <span>This week's {score.capacity} reviews:</span>
-              <span className="pair">
-                oldest-first <strong>{score.fifo.homesInList}</strong> homes
-                <span className="arrow"> → </span>
-                <span className="win">
-                  PermitPilot <strong>{score.pilot.homesInList}</strong> homes
-                </span>
-              </span>
-              <span>{score.queueSize} files waiting on a planner</span>
-            </div>
-          )}
           {error && <div className="error">{error}</div>}
         </div>
         <div className="top-actions">
           {visibleIds && (
-            <button type="button" className="ghost" onClick={() => ask("show all")}>
+            <button type="button" className="ghost" onClick={() => void ask("show all")}>
               Show all
             </button>
           )}
+          <button
+            type="button"
+            className="ghost"
+            onClick={() => openFile("calgary_housing_development_permits.csv", defaultCsv, "default")}
+          >
+            Load default data
+          </button>
           <button type="button" className="ghost" onClick={() => fileRef.current?.click()}>
-            Load CSV
+            Upload CSV
           </button>
           <input
             ref={fileRef}
@@ -298,7 +257,7 @@ export function App() {
             hidden
             onChange={(event) => {
               const file = event.target.files?.[0]
-              if (file) readFile(file)
+              if (file) readDropped(file)
               event.target.value = ""
             }}
           />
@@ -307,68 +266,59 @@ export function App() {
 
       <section className="panel chat">
         <div className="thread" ref={threadRef}>
-          {messages.length === 0 &&
-            (live ? DEMO_PROMPTS : [SAMPLE_PROMPT]).map((prompt) => (
-              <button
-                key={prompt}
-                type="button"
-                className="suggest"
-                disabled={permits.length === 0 || thinking}
-                onClick={() => ask(prompt)}
-              >
-                {prompt}
-              </button>
-            ))}
+          {messages.length === 0 && (
+            <button
+              type="button"
+              className="suggest"
+              disabled={permits.length === 0 || !fileId}
+              onClick={() => void ask(SAMPLE_PROMPT)}
+            >
+              {SAMPLE_PROMPT}
+            </button>
+          )}
           {messages.map((message) => (
             <article key={message.id} className={`msg ${message.role}`}>
               {message.role === "agent" && <div className="who">Agent</div>}
-              <p>{withBold(message.text)}</p>
-              {message.tools && <div className="tools">{message.tools.join(" · ")}</div>}
+              <p>{message.text}</p>
               {message.picks && message.picks.length > 0 && (
                 <ol className="picks">
                   {message.picks.map((pick) => (
                     <li key={pick.id}>
-                      <button
-                        type="button"
-                        onClick={() => setFocus({ id: pick.id, n: Date.now() })}
-                      >
+                      <button type="button" onClick={() => setFocus({ id: pick.id, n: Date.now() })}>
                         <span className="pick-id">{pick.id}</span>
                         <span className="pick-meta">
                           {pick.stated ? `${pick.homes} homes` : `~${pick.homes} homes`}
                           {pick.address ? ` · ${pick.address}` : ""}
-                          {live && homesTag(pick.id)}
                         </span>
                       </button>
                     </li>
                   ))}
                 </ol>
               )}
-              {message.more != null && message.more > 0 && (
-                <div className="more">{message.more} more on the map</div>
-              )}
+              {message.more != null && message.more > 0 && <div className="more">{message.more} more on the map</div>}
             </article>
           ))}
-          {thinking && (
-            <article className="msg agent">
-              <div className="who">Agent</div>
-              <p>Thinking…</p>
-            </article>
-          )}
         </div>
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            ask(draft)
+            void ask(draft)
           }}
         >
           <input
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder={permits.length ? "Ask about this file" : "Load a CSV to start"}
-            disabled={permits.length === 0}
+            placeholder={
+              permits.length === 0
+                ? "Load a CSV to start"
+                : linking
+                  ? "Connecting the review service"
+                  : "Ask about this file"
+            }
+            disabled={permits.length === 0 || !fileId}
             aria-label="Message the agent"
           />
-          <button type="submit" className="send" disabled={!draft.trim() || permits.length === 0 || thinking}>
+          <button type="submit" className="send" disabled={!draft.trim() || !fileId}>
             Send
           </button>
         </form>

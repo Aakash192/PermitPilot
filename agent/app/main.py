@@ -1,4 +1,4 @@
-"""PermitPilot API. Run: uvicorn app.main:app --reload --port 8000 (from backend/)."""
+"""PermitPilot API. Run: uvicorn app.main:app --reload --port 8000 (from agent/)."""
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
@@ -79,7 +79,7 @@ class ChatRequest(BaseModel):
 def chat(body: ChatRequest) -> dict:
     """The AI agent. 503 means no OpenAI key is set; the frontend falls back to its local agent."""
     if not (config.OPENAI_API_KEY and config.OPENAI_MODEL):
-        raise HTTPException(status_code=503, detail="Agent disabled: set OPENAI_API_KEY and OPENAI_MODEL in backend/.env")
+        raise HTTPException(status_code=503, detail="Agent disabled: set OPENAI_API_KEY and OPENAI_MODEL in agent/.env")
     history = [
         {"role": turn["role"], "content": str(turn["content"])}
         for turn in body.history[-10:]
