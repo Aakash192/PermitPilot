@@ -16,8 +16,6 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS-EC2_·_CloudFront_·_WAF-FF9900?logo=amazonwebservices&logoColor=white)
 
-[PermitPilot: 3D map of Calgary with the AI agent chat]
-
 </div>
 
 ---
@@ -57,11 +55,6 @@ Same weekly workload of 20 files:
 **17× more homes for the same effort.** Losing two of ten planners only drops four single-home suites; every large housing file stays.
 
 > **Trade-off we state openly:** oldest-first clears more total overdue days (51,341 vs 38,477), because PermitPilot prioritises homes. Planners stay in control.
-
-<p align="center">
-  <img src="assets/screenshots/lost-planners.png" alt="The agent re-planning after losing two planners" width="49%">
-  <img src="assets/screenshots/corridor.png" alt="Files near the utility corridor, with distance tags" width="49%">
-</p>
 
 ---
 
