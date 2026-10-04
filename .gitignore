@@ -1,5 +1,6 @@
 node_modules
 .turbo
+.vercel
 .DS_Store
 frontend/dist
 frontend/.env
@@ -9,3 +10,4 @@ backend/dist
 backend/.env
 backend/.env.*
 !backend/.env.example
+.env.local
