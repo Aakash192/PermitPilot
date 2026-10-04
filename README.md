@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏘️ PermitPilot
+# PermitPilot
 
 ### An AI agent that helps Calgary planners clear the permits that create the most homes first
 
@@ -22,7 +22,7 @@
 
 ---
 
-## 📌 The problem
+## The problem
 
 Calgary needs housing, and every new home starts as a **development permit** that a City planner must review. Today the queue is worked roughly oldest-first, so the files that would add the most homes often wait the longest.
 
@@ -37,14 +37,14 @@ What we found in the case data (2,000 residential permits):
 
 Home counts hide in text like *"ROWHOUSE (2 BUILDINGS), TOWNHOUSE (2 BUILDINGS), SECONDARY SUITE (15 SUITES)"*, so no simple sort can rank files by impact.
 
-## 💡 The solution
+## The solution
 
 A planning team lead chats with PermitPilot in plain English. The agent picks the right tool, our code calculates the answer from the real data, and the agent explains it while highlighting the permits on a 3D map.
 
-> 💬 *"We lost two planners this week, what drops?"*
-> 🤖 *"Assuming 10 planners normally clear 20 files a week, losing two reduces capacity to 16. Four secondary-suite files drop, and homes in the list go from 486 to 482. One dropped file is near the Transportation Utility Corridor and may need extra checks."*
+> **Planner:** *"We lost two planners this week, what drops?"*
+> **PermitPilot:** *"Assuming 10 planners normally clear 20 files a week, losing two reduces capacity to 16. Four secondary-suite files drop, and homes in the list go from 486 to 482. One dropped file is near the Transportation Utility Corridor and may need extra checks."*
 
-## 📊 Results
+## Results
 
 Same weekly workload of 20 files:
 
@@ -56,7 +56,7 @@ Same weekly workload of 20 files:
 
 **17× more homes for the same effort.** Losing two of ten planners only drops four single-home suites; every large housing file stays.
 
-> ⚖️ **Trade-off we state openly:** oldest-first clears more total overdue days (51,341 vs 38,477), because PermitPilot prioritises homes. Planners stay in control.
+> **Trade-off we state openly:** oldest-first clears more total overdue days (51,341 vs 38,477), because PermitPilot prioritises homes. Planners stay in control.
 
 <p align="center">
   <img src="assets/screenshots/lost-planners.png" alt="The agent re-planning after losing two planners" width="49%">
@@ -65,7 +65,7 @@ Same weekly workload of 20 files:
 
 ---
 
-## 🧠 How the agent works
+## How the agent works
 
 **The AI reads and explains; Python does the maths.** The model never invents a number.
 
@@ -132,7 +132,7 @@ Using the City's **Transportation Utility Corridor** map (provincial land for th
 
 ---
 
-## 🛡️ Security measures
+## Security measures
 
 ```mermaid
 flowchart LR
@@ -183,7 +183,7 @@ The agent has very little power to abuse. It can't change data, never sees secre
 
 ---
 
-## 🏗️ Architecture and deployment
+## Architecture and deployment
 
 ```mermaid
 flowchart TB
@@ -218,7 +218,7 @@ flowchart TB
 | Infra | Docker, Nginx, AWS EC2, CloudFront, WAF, Shield |
 | Tests | pytest, TypeScript type-check |
 
-## 📁 Project structure
+## Project structure
 
 ```
 PermitPilot/
@@ -244,7 +244,7 @@ PermitPilot/
         └── agent.ts         # offline fallback agent
 ```
 
-## 🚀 Run it locally
+## Run it locally
 
 **Backend** (Windows PowerShell):
 
@@ -267,7 +267,7 @@ npm run dev
 
 Open **http://localhost:5173**. API docs are at http://localhost:8000/docs. Run the tests with `python -m pytest -q` in `backend/`.
 
-## 🔌 API
+## API
 
 | Method | Endpoint | Returns |
 |---|---|---|
@@ -282,7 +282,7 @@ Open **http://localhost:5173**. API docs are at http://localhost:8000/docs. Run 
 
 ---
 
-## ⚠️ Limitations and next steps
+## Limitations and next steps
 
 **Limitations**
 - Home counts are estimates. 28 of 86 are flagged for a planner to confirm.
@@ -290,11 +290,11 @@ Open **http://localhost:5173**. API docs are at http://localhost:8000/docs. Run 
 - PermitPilot recommends an order; it never approves or refuses a permit.
 
 **Next steps**
-- 📚 **Land Use Bylaw search (RAG)** as a seventh tool, with section citations
-- 🗺️ Zoning-district join, transit and school proximity
-- 🧪 Read-only pilot with one City planning team, measuring homes moved through review against the baseline
+- **Land Use Bylaw search (RAG)** as a seventh tool, with section citations
+- Zoning-district join, transit and school proximity
+- Read-only pilot with one City planning team, measuring homes moved through review against the baseline
 
-## 👥 Team The Chimichangas
+## Team The Chimichangas
 
 | | Role |
 |---|---|
