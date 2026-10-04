@@ -284,7 +284,7 @@ export function App() {
         </div>
         <div className="top-actions">
           {visibleIds && (
-            <button type="button" className="ghost" onClick={() => ask("show all")}>
+            <button type="button" className="ghost" onClick={() => setVisibleIds(null)}>
               Show all
             </button>
           )}
