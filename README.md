@@ -16,8 +16,7 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS-EC2_·_CloudFront_·_WAF-FF9900?logo=amazonwebservices&logoColor=white)
 
-![PermitPilot: 3D map of Calgary with the AI agent chat](assets/screenshots/hero.png)
-
+![PermitPilot: 3D map of Calgary with the AI agent chat]
 </div>
 
 ---
