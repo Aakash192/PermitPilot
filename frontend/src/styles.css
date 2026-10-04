@@ -25,10 +25,45 @@ button, input { font: inherit; color: inherit; }
 
 .app { position: relative; height: 100%; }
 
+.map-shell {
+  position: absolute;
+  inset: 0;
+}
+
 .map-root {
   position: absolute;
   inset: 0;
   background: #eceae6;
+}
+
+.map-mode {
+  position: absolute;
+  z-index: 2;
+  top: 118px;
+  right: 10px;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}
+
+.map-mode button {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.map-mode button.on {
+  background: var(--ink);
+  color: #fff;
 }
 
 .panel {
@@ -217,27 +252,23 @@ button, input { font: inherit; color: inherit; }
   pointer-events: none;
 }
 
-.leaflet-interactive { cursor: pointer; }
-
-.leaflet-control-attribution {
+.mapboxgl-ctrl-attrib {
   font-size: 10px;
-  background: rgba(255, 255, 255, 0.8) !important;
+  background: rgba(255, 255, 255, 0.8);
 }
 
-.leaflet-popup-content-wrapper {
+.mapboxgl-popup-content {
   background: #fff;
   color: #1c1917;
   border-radius: 12px;
   box-shadow: 0 12px 40px rgba(28, 25, 23, 0.18);
-}
-
-.leaflet-popup-content {
-  margin: 12px 14px;
+  padding: 12px 14px;
   font-family: "IBM Plex Sans", sans-serif;
   font-size: 13px;
   line-height: 1.4;
-  color: var(--ink);
 }
+
+.mapboxgl-popup-close-button { display: none; }
 
 .popup-id {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
