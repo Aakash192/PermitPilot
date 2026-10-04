@@ -301,9 +301,3 @@ Open **http://localhost:5173**. API docs are at http://localhost:8000/docs. Run 
 | **Aakash Suryavanshi** | Backend, AI agent, data pipeline, AWS deployment and security |
 | **Harsingh Sekhon** | Frontend, map and 3D view |
 | **Khalid Mehmood** | Utility-industry and geospatial expertise, data validation, problem framing |
-
-<div align="center">
-
-Built in 48 hours at Hunter Hub, University of Calgary · October 2026
-
-</div>
