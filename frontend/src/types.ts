@@ -16,6 +16,14 @@ export type Permit = {
   stated: boolean
   basis: string
   ageDays: number | null
+  // Only present when permits come from the backend.
+  group?: "needs_decision" | "hold" | "awaiting_release" | "history" | "other"
+  targetDays?: number
+  daysOver?: number | null
+  needsReview?: boolean
+  evidenceQuote?: string
+  homesSource?: "llm" | "regex"
+  isMulti?: boolean
 }
 
 export type PickRow = {

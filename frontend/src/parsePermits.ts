@@ -2,10 +2,12 @@ import Papa from "papaparse"
 import { estimateHomes } from "./homes"
 import type { Permit } from "./types"
 
-const CLOSED = new Set(["released", "cancelled", "canceled", "approved"])
+// Only these statuses still need a planner decision. Pending Release and In Advertising
+// already have a decision date, and Hold is paused, so they are not in the queue.
+const NEEDS_DECISION = new Set(["new", "in circulation", "under review", "pending decision"])
 
 export function isOpenStatus(status: string): boolean {
-  return !CLOSED.has(status.trim().toLowerCase())
+  return NEEDS_DECISION.has(status.trim().toLowerCase())
 }
 
 function norm(value: string): string {
